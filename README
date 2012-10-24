@@ -1,6 +1,6 @@
 dsafilter
-(c) Jon Dowland 2005
-Last updated Thu Nov 24 23:01:44 GMT 2005
+<http://jmtd.net/dsafilter/>
+© Jon Dowland 2005-2012
 
 Introduction
 
@@ -11,11 +11,7 @@ Introduction
        can use the emails as a TODO-list, deleting each DSA as the
        corresponding machine is upgraded.
 
-   So far, I've achieved the first. The second is up-coming.
-
-release-2
-
-   release-2 only satisfies the first of my two itches, namely,
+   dsafilter so far only satisfies the first of my two itches, namely,
    identifying whether a given DSA is applicable to the machine on which
    the filter is run.
 
@@ -31,5 +27,4 @@ release-2
 Comments
 
    Comments, suggestions, test-cases, patches, documentation etc. to
-   jon@dowland.name.
-
+   jmtd@debian.org.

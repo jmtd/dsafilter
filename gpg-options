@@ -1,4 +1,0 @@
-# the two files which comprise the debian keyring, in order 
-# to check the signature on DSA emails
-keyring /usr/share/keyrings/debian-keyring.gpg
-keyring /usr/share/keyrings/debian-keyring.pgp
