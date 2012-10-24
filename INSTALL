@@ -1,0 +1,67 @@
+INSTALLING DSAFILTER
+Last modified Tue Dec 13 11:31:55 GMT 2005
+
+Step 1: prepare GPG
+
+  dsafilter requires the user you plan to run it as to have GnuPG
+  available in the $PATH and to be setup with knowledge of the keys
+  used to sign DSAs (see note 1)
+
+  apt-get install gnupg debian-keyring
+  mkdir -p ~/.gnupg
+  cat >>~/.gnupg/gpg.conf<<EOF
+  keyring /usr/share/keyrings/debian-keyring.gpg
+  keyring /usr/share/keyrings/debian-keyring.pgp
+  EOF
+
+  The first run of dsafilter may take a while as gnupg churns its way
+  over the debian keyring.
+
+Step 2: setup something to forward DSAs to dsafilter
+
+  You need to invoke dsafilter somehow. I do it via procmail, using a
+  recipe like the following:
+
+  :0fw: .dsafilter.lock
+  *^Subject: \[SECURITY\] \[DSA
+  | /home/jon/bin/dsafilter
+
+  (regarding the lockfile, see note 2)
+
+Step 3: setup something to filter the resulting mail
+
+  Now dsafilter has replaced the DSA with it's own email, you will
+  want to filter those mails, perhaps discarding those which are not
+  interesting. A procmail recipe like the following will do it:
+
+  :0
+  * ^Subject: \[dsafilter\]
+  {
+    # keep applicable DSA mails
+    :0
+    * ^Subject:.*of interest$
+    some-destination-mailbox
+
+    # discard others
+    :0
+    /dev/null
+  }
+
+  (see note 3)
+
+
+NOTES
+
+1. This is not a limitation for me personally which is why I have not
+   provided an alternative way of doing things. If anyone who wishes
+   to use this script is not happy with importing the debian keyring
+   in this manner, get in touch.
+
+2. The lock file is not necessary, but I use it just in case the
+   process goes mad for some reason, there will only be one broken
+   dsafilter process at once.
+
+3. The example recipe matches on the Subject line, inspecting the
+   beginning for [dsafilter] and the end for "of interest". I will
+   perhaps add a header like "X-DSAFilter-Result" with a numeric code
+   which can be matched more easily.

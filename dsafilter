@@ -1,0 +1,183 @@
+#!/usr/bin/ruby
+# $Id: dsafilter,v 1.30 2005/11/29 13:15:13 jon Exp $
+# vim: set sts=2 ts=2 sw=2 tw=78 expandtab autoindent:
+
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2; as published by
+# the Free Software Foundation. See the file `LICENCE' for details.
+
+begin
+
+require 'rmail'
+require 'tempfile'
+require 'socket'
+
+# TODO: what if it doesn't parse properly?
+dsa     = RMail::Parser.read($stdin)
+
+## is the mail a DSA? if not, print it out and quit ##########################
+unless /\[SECURITY\] \[DSA[ -](\d+-\d+)\]/.match(dsa.header['Subject']) then
+  dsa.header['X-DSAFilter-Result'] = '201 - not a DSA'
+  print RMail::Serialize.write('', dsa)
+  exit
+end
+dsanum = $1
+host   = Socket.gethostname
+
+## subroutines for the program ###############################################
+def packagename(dsa)
+  package = ''
+  body = dsa.body
+  body = dsa.body[0] if dsa.multipart?
+  body.each_line do |line|
+    # see Debian Policy 5.6.6 for definition of valid package names
+    if /^Package\s+:\s*([a-z][a-z0-9\+\-\.]+)$/.match(line) then
+      package = $1
+      break
+    end
+  end
+  package
+end
+
+## prepare the return mail ###################################################
+message = RMail::Message.new
+mbody   = RMail::Message.new
+time    = Time.new
+
+# Date/From mandated by RFC 2822
+message.header['Subject'] = '[dsafilter]'
+message.header['Date'] = time.rfc2822
+message.header['From'] = 'dsafilter' # TODO: valid addr / configurable
+message.header['To']   = dsa.header['To'] unless '' == dsa.header['To']
+message.body = []
+
+## confirm mail signature ####################################################
+
+# TODO: I really, really hate this section :) I hope to be able to use GPGME
+# or something similar to clean this up.
+
+# check the path for a GPG executable
+gpg = false
+ENV['PATH'].split(':').each { |path|
+  if File.executable?(path+'/gpg') then
+    gpg = true
+    break
+  end
+}
+
+if gpg then
+  tmp = Tempfile.new('dsafilter')
+  tmp << dsa.decode
+  tmp.close
+  res = `gpg -q --verify #{ tmp.path } 2>&1`
+
+  # if the mail sig is bad, package it up and report
+  unless $? == 0 then
+    mbody.body = "The attached Debian Security Advisory failed its "+
+                 "signature check.\nGnuPG output:\n\n" + res
+    message.header.set('Subject', 
+      message.header['Subject']+' DSA/'+dsanum+' attached (signature failure)'
+    )
+    message.body << mbody << dsa
+    message.header['X-DSAFilter-Result'] = '312 - gpg signature might be bad'
+
+    print RMail::Serialize.write('', message)
+    exit
+  end
+
+# handle no-GPG case
+else
+  mbody.body = "The attached Debian Security Advisory could not have it's\n"+
+               "GPG signature checked: no executable gpg binary was found."
+
+  sub = message.header['Subject'] + ' ' + dsanum
+  package = packagename(dsa)
+  sub += '/'+package unless '' == package
+  sub += ' potentially applicable'
+  message.header.set('Subject', sub)
+                                
+  message.body << mbody << dsa
+  message.header['X-DSAFilter-Result'] = '311 - cannot find a gpg binary'
+
+  print RMail::Serialize.write('', message)
+  exit
+end
+
+## extract the package name from the DSA #####################################
+package = packagename(dsa)
+if '' == package then
+  sub = message.header['Subject'] + ' ' + dsanum
+  package = packagename(dsa)
+  sub += '/'+package unless '' == package
+  sub += ' potentially applicable'
+  message.header.set('Subject', sub)
+
+  mbody.body = "dsafilter could not extract the package that is\n"+
+               'vulnerable from the attached DSA.'
+  message.body << mbody << dsa
+  message.header['X-DSAFilter-Result'] = 
+    '321 - cannot extract source package name'
+
+  print RMail::Serialize.write('', message)
+  exit
+end
+
+## DSA is valid but is it applicable? ########################################
+message.header.set('Subject', message.header['Subject']+
+                              ' DSA/'+dsanum+' '+package+' on '+host)
+
+# TODO: may need to specify exact version to apt-cache showsrc? is it
+# possible, when we have multiple source lines, to have incorrect information
+# as a result?
+
+pkgs = []
+cache = `apt-cache showsrc '#{ package }'`
+if cache == "" then
+  message.header.set('Subject', message.header['Subject']+' might apply')
+  mbody.body = 'dsafilter could not determine if the attached DSA is '+
+               'applicable to your system.'
+  message.body << mbody << dsa
+  message.header['X-DSAFilter-Result'] = 
+    "322 - can't determine binary packages for source package"
+
+  print RMail::Serialize.write('', message)
+  exit
+else
+  cache.each_line { |line|
+    next unless /^Binary:/.match(line)
+    line = line.split(' ')
+    line.shift
+    line.join('').split(',').each { |pkg|
+      pkgs << pkg.strip
+    }
+  }
+end
+
+# filter for installed packages
+# TODO: COLUMNS is a nasty hack, not guaranteed to be long enough?
+dpkg = `COLUMNS=255 dpkg -l '#{ pkgs.join("' '") }' 2>&1`
+pkgs = dpkg.split("\n")
+pkgs.delete_if { |p| !/^ii/.match(p) }.collect! { |p| p.split(' ')[1] }
+
+unless pkgs.empty? then
+  mbody.body = 'The following installed packages are '   +
+               "possibly affected by the attached DSA:\n"+
+               "\t"+pkgs.uniq.join("\n\t")
+  message.header.set('Subject', message.header['Subject']+' of interest')
+  message.header['X-DSAFilter-Result'] = '101 - DSA of interest'
+else
+  message.header.set('Subject', message.header['Subject']+' does not apply')
+  message.header['X-DSAFilter-Result'] = '102 - DSA does not apply'
+  mbody.body = "The attached Debian Security Advisory is not applicable."
+end
+
+message.body << mbody << dsa
+print RMail::Serialize.write('', message)
+
+## catch various exceptions from above #######################################
+# rescue LoadError => e
+# if the require lines fail.
+# rescue SomeThing => e
+# ensure ...
+
+end

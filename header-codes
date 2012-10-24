@@ -1,0 +1,18 @@
+#
+# header codes
+# TODO: choose number ranges which are similar to HTTP to avoid confusion
+#       (e.g. 4xx for error) or at least think about it
+# 100 - DSA
+  # 101 - DSA of interest
+  # 102 - DSA not of interest
+# 200 - not a DSA
+  # 201 - not a DSA
+# 300 - errors
+  # 310 - GPG errors
+    # 311 - no GPG binary available
+    # 312 - mail signature is bad
+  # 320 - package errors
+    # 321 - can't extract package name
+    # 322 - can't determine binary packages for source package
+#
+

@@ -1,0 +1,187 @@
+Tue Jan 17 12:39:10 GMT 2006
+
+Create `Changelog' from the old `cvs log' output
+Modify the Subject line for the can't-determine-package case: include
+the DSA number for clarity (same as the no-GPG case)
+
+2005-11-29 13:15:13 +0000
+
+merge in our release-2 fixes
+
+2005-11-07 17:43:55 +0000
+
+branches:  1.29.2;
+insert fingerprints for the debian security team in the allowed list
+
+2005-11-07 17:28:05 +0000
+
+added licence, GPL-2.
+
+2005-11-07 00:06:13 +0000
+
+fix major bug where we compare an Array to a String
+
+change approach to calling dpkg; now there's only one dpkg call ever (much
+faster), the trade-off is if a package name is long (long enough to be
+truncated by dpkg with $COLUMNS=255) we will get an inaccurate answer
+
+2005-11-06 21:36:18 +0000
+
+more work on GPG checks
+
+2005-11-02 22:27:29 +0000
+
+sigcheck.rb: the logic for determining if the fingerprint is ok
+
+2005-10-31 18:31:19 +0000
+
+fix the GPG binary check
+
+2005-10-31 15:17:09 +0000
+
+bug fix (major): uniq! doesn't return the array; uniq returns a new one
+(use latter)
+check for a gpg binary before we try to verify the sig
+
+2005-10-31 12:47:30 +0000
+
+added a Date and From fields to the DSA mail
+
+2005-10-30 21:45:27 +0000
+
+fix a logic error when filtering out which packages are vulnerable
+
+2005-10-30 21:33:20 +0000
+
+call out to "apt-cache showsrc" to determine which binary packages might be
+vulnerable and list them in the mail
+
+2005-10-30 19:19:11 +0000
+
+some notes about libdpkg-ruby1.8
+
+2005-10-25 19:18:57 +0000
+
+finish adjusting the header appends
+
+2005-10-25 19:08:06 +0000
+
+use Header.add rather than += to stop duplicating the Subject: header
+a pointer to two RFCs worth reading
+
+2005-10-24 22:34:07 +0000
+
+some TODOs: we're duplicating headers
+two/three syntax errors fixed - the incomplete path checking code disabled
+TODOs: need to write some other headers (e.g. 'To:')
+
+2005-10-24 22:15:50 +0000
+
+* shift RMail::Message instantiation later on (so it's not done if we
+  bail out early)
+* remove header code comment (since we've abandoned them)
+* preliminary loop to check for a gpg binary
+* add a TODO: interpret GPG error messages
+* compact array push operations (<<)
+
+2005-10-24 19:59:43 +0000
+
+add a vim modeline
+add 'begin' and 'end' bookends, to facilitate adding exception checking
+change indentation (2-space)
+shell escaping issue addressed
+deal with multipart DSAs (although I don't know if any exist yet, they might)
+adjust package-regexp to match according to debian policy
+complete the move to the new-mail model
+
+2005-10-23 22:06:41 +0000
+
+(major) attach DSA to a new dsafilter message rather than modify the DSA
+(minor) move the tempfile code to be next to the GPG checking section
+(minor) a handful more TODOs
+
+2005-10-23 15:36:48 +0000
+
+just remove a comment
+
+2005-10-20 10:19:48 +0000
+
+branches:  1.11.2;
+exit with an error so procmail delivers the message (rather than
+delivering a 0-byte message).
+
+2005-10-20 10:14:06 +0000
+
+check for X-DSAFilter-Results header to avoid loops
+
+2005-10-19 20:13:42 +0000
+
+write out the decoded body to a tempfile and ask GPG to verify it. Indicate
+failure with a new error code+message.
+A handful of TODOs.
+
+2005-10-16 09:51:14 +0000
+
+break if we find the package (stop scanning the rest of the mail)
+
+2005-10-13 19:49:26 +0000
+
+adopt sa-style headers
+
+2005-10-13 19:25:25 +0000
+
+adjust dpkg call to clear STDERR
+
+2005-10-13 19:15:57 +0000
+
+remove a superfluous print statement
+
+2005-10-13 19:06:02 +0000
+
+check for installed packages and do things accordingly
+
+2005-10-13 16:36:05 +0000
+
+start trying to merge in some of the DSA logic to rmail.rb
+
+2005-10-13 11:59:18 +0000
+
+fix Id string
+
+2005-10-13 11:58:13 +0000
+
+added rmail.rb ; rmail experiments
+
+2005-11-07 17:36:00 +0000
+
+added licence preamble
+
+2005-10-31 18:44:38 +0000
+
+move tempfile stuff down into the GPG area
+backport expanded gpg checking from trunk
+backport source => [binary] stuff from trunk
+some tab removal
+re-order the package codes
+
+2005-10-24 22:23:48 +0000
+
+changes taken from the trunk:
+	* remove old TODO re: signature checking
+	* add two TODOs to the gpg section (other failure possibilities)
+	* handle the case where the DSA is a multipart message
+	* tweak the regexp to abide debian policy for package names
+	* prevent potential shell problems with dpkg callout
+
+2005-11-24 22:53:36 +0000
+
+* wrap-up the package-extraction code in a subroutine
+* clean up the Subject lines: indicate
+  	hostname of computer
+  	DSA number
+  	package
+  where appropriate.
+
+2005-11-12 15:55:33 +0000
+
+cut out a big chunk of GPG error-checking code.

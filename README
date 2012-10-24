@@ -1,0 +1,35 @@
+dsafilter
+(c) Jon Dowland 2005
+Last updated Thu Nov 24 23:01:44 GMT 2005
+
+Introduction
+
+   dsafilter is a script designed to filter Debian Security
+   Advisories (DSAs). It was written to scratch two itches:
+    1. To bin DSAs for packages I do not have installed
+    2. To send me a mail for each computer the DSA is applicable to, so I
+       can use the emails as a TODO-list, deleting each DSA as the
+       corresponding machine is upgraded.
+
+   So far, I've achieved the first. The second is up-coming.
+
+release-2
+
+   release-2 only satisfies the first of my two itches, namely,
+   identifying whether a given DSA is applicable to the machine on which
+   the filter is run.
+
+   DSAs that pass through the filter are wrapped up in an email which
+   summarises whether the DSA had a valid signature and whether the
+   package(s) it applies to are installed, all in the subject.
+
+   Presently, this version relies on GnuPG being installed, the gpg
+   binary being in the $PATH variable, and the public key used to sign
+   genuine DSAs (available in package debian-keyring) imported into the
+   user's GPG keyring.
+
+Comments
+
+   Comments, suggestions, test-cases, patches, documentation etc. to
+   jon@dowland.name.
+
