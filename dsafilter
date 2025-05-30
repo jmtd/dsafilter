@@ -170,6 +170,9 @@ else
   mbody.body = "The attached Debian Security Advisory is not applicable."
 end
 
+# mbox_from (first line "From foo"…) causes some MIME decoders to complain
+dsa.header.mbox_from = nil
+
 message.body << mbody << dsa
 print RMail::Serialize.write('', message)
 
